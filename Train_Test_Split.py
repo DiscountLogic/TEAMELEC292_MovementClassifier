@@ -31,6 +31,9 @@ for person in preprocessed_group:
                 # Convert to DataFrame
                 df = pd.DataFrame(data, columns=["Time (s)", "Accel_X", "Accel_Y", "Accel_Z", "Absolute Accel"])
 
+                # Keep only rows between 5 and 25 seconds
+                df = df[(df["Time (s)"] >= 5.0) & (df["Time (s)"] <= 25.0)]
+
                 # Segment the data into 5-second windows
                 segmented_data = [df.iloc[i:i + SAMPLES_PER_WINDOW].to_numpy()
                                   for i in range(0, len(df) - SAMPLES_PER_WINDOW, SAMPLES_PER_WINDOW)]

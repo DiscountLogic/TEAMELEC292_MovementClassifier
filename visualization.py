@@ -25,6 +25,9 @@ def plot_activity_acceleration(person, activity):
     data_combined = np.vstack(all_data)  # Stack all position data together
     df = pd.DataFrame(data_combined, columns=["Time (s)", "Accel_X", "Accel_Y", "Accel_Z", "Absolute Accel"])
 
+    # Filter to only keep time from 5 to 25 seconds
+    df = df[(df["Time (s)"] >= 5.0) & (df["Time (s)"] <= 25.0)]
+
     fig, axs = plt.subplots(4, 1, figsize=(12, 10), sharex=True)
 
     # Plot Acceleration X
@@ -56,3 +59,7 @@ def plot_activity_acceleration(person, activity):
 # Example usage
 plot_activity_acceleration("Brian", "Jumping")
 plot_activity_acceleration("Brian", "Walking")
+plot_activity_acceleration("Cissi", "Jumping")
+plot_activity_acceleration("Cissi", "Walking")
+plot_activity_acceleration("Alisa", "Jumping")
+plot_activity_acceleration("Alisa", "Walking")
