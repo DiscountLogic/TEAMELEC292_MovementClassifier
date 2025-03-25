@@ -8,7 +8,6 @@ from sklearn.preprocessing import StandardScaler
 # Load data from HDF5 file
 hdf5_file = "accelerometer_data.h5"
 
-
 def load_activity_data(person, activity):
     """Loads accelerometer data for a given person and activity."""
     with h5py.File(hdf5_file, "r") as hdf:
