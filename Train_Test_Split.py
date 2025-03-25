@@ -15,7 +15,7 @@ train_test_group = hdf5_file.create_group("train_test_split")
 WINDOW_SIZE = 5
 
 # Sampling frequency (assuming ~50Hz, update if different)
-SAMPLE_RATE = 50
+SAMPLE_RATE = 100
 SAMPLES_PER_WINDOW = WINDOW_SIZE * SAMPLE_RATE
 
 # Access preprocessed data

@@ -4,6 +4,7 @@ import pandas as pd
 from scipy.stats import skew, kurtosis
 from scipy.fft import fft
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
 # Load data from HDF5 file
 hdf5_file = "accelerometer_data.h5"
@@ -21,7 +22,6 @@ def load_activity_data(person, activity):
 
     data_combined = np.vstack(all_data)
     return pd.DataFrame(data_combined, columns=["Time (s)", "Accel_X", "Accel_Y", "Accel_Z", "Absolute Accel"])
-
 
 def extract_features(window):
     """Extracts 10 features per axis (X, Y, Z)."""
@@ -47,14 +47,12 @@ def extract_features(window):
 
     return features
 
-
 def normalize_features(df_features):
     """Applies Z-score standardization (normalization) to all features."""
     scaler = StandardScaler()
     feature_columns = [col for col in df_features.columns if col != 'Activity' and col != 'Person']
     df_features[feature_columns] = scaler.fit_transform(df_features[feature_columns])
     return df_features
-
 
 def process_all_people():
     """Processes all people and extracts features for walking & jumping."""
@@ -88,12 +86,41 @@ def process_all_people():
     # Normalize features
     df_all = normalize_features(df_all)
 
-    # Save to CSV
-    df_all.to_csv("walking_jumping_features_all_normalized.csv", index=False)
-
     return df_all
 
+def save_segmented_data_to_hdf5(df_all):
+    """Splits data into training and testing sets, and saves it to HDF5."""
+    # Split data into features (X) and labels (y)
+    X = df_all.drop(columns=["Activity", "Person"]).to_numpy()
+    y = df_all["Activity"].to_numpy()
 
-# Run Feature Extraction and Normalization
+    # Split into training and testing sets (90% train, 10% test)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+
+    with h5py.File(hdf5_file, "a") as hdf:
+        # Create 'Segmented data' group if it doesn't exist
+        if "Segmented data" not in hdf:
+            segmented_data_group = hdf.create_group("Segmented data")
+        else:
+            segmented_data_group = hdf["Segmented data"]
+
+        # Create 'Train' and 'Test' subgroups
+        train_group = segmented_data_group.create_group("Train")
+        test_group = segmented_data_group.create_group("Test")
+
+        # Save training and testing data
+        train_group.create_dataset("features", data=X_train)
+        train_group.create_dataset("labels", data=y_train)
+
+        test_group.create_dataset("features", data=X_test)
+        test_group.create_dataset("labels", data=y_test)
+
+    print("Training and testing data saved to HDF5!")
+
+# Run Feature Extraction, Normalization, and Saving to HDF5
 df_features_normalized = process_all_people()
-print("Feature extraction and normalization complete! 🚀")
+
+# Save the segmented data to HDF5
+save_segmented_data_to_hdf5(df_features_normalized)
+
+print("Feature extraction, normalization, segmentation, and saving to HDF5 complete! 🚀")
