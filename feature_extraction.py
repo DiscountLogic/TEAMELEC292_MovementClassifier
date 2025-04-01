@@ -67,8 +67,7 @@ def process_all_people():
 
             # Split into 5-second windows
             window_size = 100  # Assuming 100 Hz sampling rate
-            windows = [df.iloc[i:i + window_size, 1:4].values for i in range(0, len(df), window_size) if
-                       len(df.iloc[i:i + window_size]) == window_size]
+            windows = [df.iloc[i:i + window_size, 1:4].values for i in range(0, len(df), window_size) if len(df.iloc[i:i + window_size]) == window_size]
 
             # Extract features
             features_list = [extract_features(window) for window in windows]
@@ -123,4 +122,4 @@ df_features_normalized = process_all_people()
 # Save the segmented data to HDF5
 save_segmented_data_to_hdf5(df_features_normalized)
 
-print("Feature extraction, normalization, segmentation, and saving to HDF5 complete! 🚀")
+print("Feature extraction, normalization, segmentation, and saving to HDF5 complete!")
