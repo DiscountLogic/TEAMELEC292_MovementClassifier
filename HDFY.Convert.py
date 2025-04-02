@@ -1,12 +1,7 @@
 import os
 import pandas as pd
+import numpy as np
 import h5py
-
-# Load the CSV file
-df = pd.read_csv("Data Collection\Cissi\Jumping\Average\JPSlowJump.csv")
-
-# Display first few rows to confirm structure
-print(df.head())
 
 # Define the base folder where CSV files are stored
 base_folder = "Data Collection"
@@ -43,8 +38,17 @@ for person in os.listdir(base_folder):
                                 # Read CSV file
                                 df = pd.read_csv(file_path)
 
-                                # Convert to NumPy array for storage
+                                # Ensure all data is numeric (convert objects to strings if needed)
+                                for col in df.columns:
+                                    if df[col].dtype == 'O':  # Check for object type (non-numeric)
+                                        df[col] = df[col].astype(str)  # Convert to string
+
+                                # Convert to NumPy array
                                 data_array = df.to_numpy()
+
+                                # Ensure object columns are properly encoded before saving
+                                if data_array.dtype == 'O':
+                                    data_array = np.array(data_array, dtype='S')  # Convert to byte strings
 
                                 # Store the dataset using the filename as the key
                                 dataset_name = csv_file.replace(".csv", "")

@@ -1,4 +1,5 @@
 import h5py
+import joblib
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler, LabelEncoder
@@ -54,3 +55,15 @@ RocCurveDisplay(fpr=fpr, tpr=tpr).plot()
 plt.show()
 auc = roc_auc_score(y_test, y_clf_prob)
 print(f'AUC: {auc:.4f}')
+
+# Save the trained model
+joblib.dump(clf, "movement_classifier_model.pkl")
+print("✅ Model saved as 'movement_classifier_model.pkl'")
+
+# Save the scaler with feature names
+scaler_info = {
+    "scaler": scaler,
+    "features": [f"Feature_{i}" for i in range(X_train.shape[1])]  # Generic feature names
+}
+joblib.dump(scaler_info, "scaler_with_features.pkl")
+print("✅ Scaler saved as 'scaler_with_features.pkl'")

@@ -6,6 +6,7 @@ import scipy.signal as signal
 # Open the HDF5 file
 hdf5_file = h5py.File("accelerometer_data.h5", "a")  # Open in append mode
 
+
 # Create a new group for preprocessed data
 if "preprocessed_data" in hdf5_file:
     del hdf5_file["preprocessed_data"]  # Remove previous data if exists
