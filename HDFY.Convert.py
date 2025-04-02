@@ -2,12 +2,6 @@ import os
 import pandas as pd
 import h5py
 
-# Load the CSV file
-#df = pd.read_csv("Data Collection\Cissi\Jumping\Average\JPSlowJump.csv")
-
-# Display first few rows to confirm structure
-#print(df.head())
-
 # Define the base folder where CSV files are stored
 base_folder = "Data Collection"
 
