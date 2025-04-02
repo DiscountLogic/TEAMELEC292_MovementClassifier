@@ -73,6 +73,10 @@ def process_all_people():
             # Extract features
             features_list = [extract_features(window) for window in windows]
 
+            ###
+            print("Extracted features (Training, first window):")
+            print(df_features.iloc[0])
+
             # Convert to DataFrame
             df_features = pd.DataFrame(features_list)
             df_features["Activity"] = activity
@@ -88,6 +92,7 @@ def process_all_people():
 
     return df_all
 
+
 def save_segmented_data_to_hdf5(df_all):
     """Splits data into training and testing sets, and saves it to HDF5."""
     # Split data into features (X) and labels (y)
@@ -98,13 +103,21 @@ def save_segmented_data_to_hdf5(df_all):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 
     with h5py.File(hdf5_file, "a") as hdf:
-        # Create 'Segmented data' group if it doesn't exist
+        # Ensure the 'Segmented data' group exists
         if "Segmented data" not in hdf:
             segmented_data_group = hdf.create_group("Segmented data")
         else:
             segmented_data_group = hdf["Segmented data"]
 
-        # Create 'Train' and 'Test' subgroups
+        # Remove 'Train' group if it already exists
+        if "Train" in segmented_data_group:
+            del segmented_data_group["Train"]
+
+        # Remove 'Test' group if it already exists
+        if "Test" in segmented_data_group:
+            del segmented_data_group["Test"]
+
+        # Now safely create 'Train' and 'Test' groups
         train_group = segmented_data_group.create_group("Train")
         test_group = segmented_data_group.create_group("Test")
 
@@ -116,6 +129,8 @@ def save_segmented_data_to_hdf5(df_all):
         test_group.create_dataset("labels", data=y_test)
 
     print("Training and testing data saved to HDF5!")
+
+
 
 # Run Feature Extraction, Normalization, and Saving to HDF5
 df_features_normalized = process_all_people()

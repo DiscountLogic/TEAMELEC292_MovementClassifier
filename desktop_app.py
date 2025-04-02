@@ -40,6 +40,7 @@ def moving_average_filter(data, window_size=5):
 
 
 def process_and_predict(file_path):
+
     try:
         df = pd.read_csv(file_path)
         data = df[["Linear Acceleration x (m/s^2)",
@@ -50,11 +51,6 @@ def process_and_predict(file_path):
 
         for col in data.columns:
             data[col] = moving_average_filter(data[col].values, window_size=5)
-
-        if "Time (s)" in df.columns:
-            data = data[(df["Time (s)"] >= 5.0) & (df["Time (s)"] <= 25.0)].reset_index(drop=True)
-        else:
-            data = data.reset_index(drop=True)
 
         window_size = 500
         windows = [data.iloc[i:i + window_size, :3].values
@@ -67,6 +63,9 @@ def process_and_predict(file_path):
 
         features = [extract_features(w) for w in windows]
         df_features = pd.DataFrame(features)
+
+        print("Extracted features (Desktop App, first window):")
+        print(df_features.iloc[0])
 
         print("Feature columns before scaling:", df_features.columns.tolist())
 
@@ -110,6 +109,8 @@ def process_and_predict(file_path):
 
     except Exception as e:
         messagebox.showerror("Error", str(e))
+
+
 
 
 # -------------------- GUI --------------------

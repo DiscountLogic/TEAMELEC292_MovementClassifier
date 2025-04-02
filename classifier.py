@@ -28,8 +28,18 @@ X_test = scaler.transform(X_test)
 
 
 # Save the scaler to use in the desktop app
-joblib.dump(scaler, "scaler.pkl")
-print("✅ Scaler saved as 'scaler.pkl'")
+
+# Explicitly list your feature columns in the same exact order used during training
+feature_columns = [
+    'max_Accel_X', 'min_Accel_X', 'range_Accel_X', 'mean_Accel_X', 'std_Accel_X', 'rms_Accel_X', 'skew_Accel_X', 'kurtosis_Accel_X', 'fft_peak_Accel_X', 'fft_mean_Accel_X',
+    'max_Accel_Y', 'min_Accel_Y', 'range_Accel_Y', 'mean_Accel_Y', 'std_Accel_Y', 'rms_Accel_Y', 'skew_Accel_Y', 'kurtosis_Accel_Y', 'fft_peak_Accel_Y', 'fft_mean_Accel_Y',
+    'max_Accel_Z', 'min_Accel_Z', 'range_Accel_Z', 'mean_Accel_Z', 'std_Accel_Z', 'rms_Accel_Z', 'skew_Accel_Z', 'kurtosis_Accel_Z', 'fft_peak_Accel_Z', 'fft_mean_Accel_Z'
+]
+
+# Save scaler along with feature names explicitly
+joblib.dump({'scaler': scaler, 'features': feature_columns}, "scaler_with_features.pkl")
+print("✅ Scaler with features saved as 'scaler_with_features.pkl'")
+
 
 # Initialize the logistic regression model
 logreg = LogisticRegression(max_iter=1000)

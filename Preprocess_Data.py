@@ -33,21 +33,20 @@ for person in raw_data_group:
 
                 # Convert to DataFrame for easier manipulation
                 df = pd.DataFrame(data, columns=["Time (s)",
-                                                 "Accel_X",
-                                                 "Accel_Y",
-                                                 "Accel_Z",
-                                                 "Absolute Accel"])
+                                                 "Linear Acceleration x (m/s^2)",
+                                                 "Linear Acceleration y (m/s^2)",
+                                                 "Linear Acceleration z (m/s^2)",
+                                                 "Absolute acceleration (m/s^2)"])
 
-                # Handle missing values (Forward Fill)
-                df.fillna(method="ffill", inplace=True)
+                df = df.ffill()
 
-                # Apply Moving Average Filter
-                df["Accel_X"] = moving_average_filter(df["Accel_X"])
-                df["Accel_Y"] = moving_average_filter(df["Accel_Y"])
-                df["Accel_Z"] = moving_average_filter(df["Accel_Z"])
-                df["Absolute Accel"] = moving_average_filter(df["Absolute Accel"])
+                # Apply moving average filter using correct names
+                df["Linear Acceleration x (m/s^2)"] = moving_average_filter(df["Linear Acceleration x (m/s^2)"])
+                df["Linear Acceleration y (m/s^2)"] = moving_average_filter(df["Linear Acceleration y (m/s^2)"])
+                df["Linear Acceleration z (m/s^2)"] = moving_average_filter(df["Linear Acceleration z (m/s^2)"])
+                df["Absolute acceleration (m/s^2)"] = moving_average_filter(df["Absolute acceleration (m/s^2)"])
 
-                # Store preprocessed data in the HDF5 file
+                # Store preprocessed data
                 speed_group.create_dataset(position, data=df.to_numpy())
 
 print("✅ Preprocessing complete! Data stored in /preprocessed_data/")
