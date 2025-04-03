@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 from scipy.stats import skew, kurtosis
 from scipy.fft import fft
-from sklearn.preprocessing import StandardScaler
 import joblib
 import matplotlib.pyplot as plt
 
@@ -60,7 +59,7 @@ def classify_csv(file_path):
     predictions = model.predict(df_features)
 
     # Change output from numeric to string ('Walking' and 'Jumping')
-    activity_mapping = {0: "Walking", 1: "Jumping"}
+    activity_mapping = {0: "Jumping", 1: "Walking"}
     predicted_activities = [activity_mapping[pred] for pred in predictions]
 
     # Create results DataFrame
