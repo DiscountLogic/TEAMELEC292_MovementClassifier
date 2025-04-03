@@ -71,7 +71,7 @@ def classify_csv(file_path):
     plt.title("Predicted Activity Over Segments")
     plt.xlabel("Segment")
     plt.ylabel("Predicted Activity")
-    plt.yticks([0, 1], ["Walking", "Jumping"])  # Map 0 to "Walking" and 1 to "Jumping"
+    plt.yticks([0, 1], ["Walking", "Jumping"])
     plt.legend(loc="upper right")
     plt.show()
 
