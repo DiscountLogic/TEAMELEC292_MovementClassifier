@@ -1,71 +1,5 @@
-# import matplotlib
-# matplotlib.use("TkAgg")  # Fixes the issue with interactive plots
-#
-# import h5py
-# import numpy as np
-# import pandas as pd
-# import matplotlib.pyplot as plt
-#
-# hdf5_file = "accelerometer_data.h5"
-#
-#
-# def plot_activity_acceleration(person, activity):
-#     """Plots acceleration vs. time for a given person and activity (all positions combined)."""
-#
-#     with h5py.File(hdf5_file, "r") as hdf:
-#         preprocessed_data = hdf[f"preprocessed_data/{person}/{activity}"]
-#
-#         all_data = []
-#         for speed in preprocessed_data:
-#             for position in preprocessed_data[speed]:
-#                 dataset = np.array(preprocessed_data[speed][position])
-#                 all_data.append(dataset)
-#
-#     # Convert to DataFrame
-#     data_combined = np.vstack(all_data)  # Stack all position data together
-#     df = pd.DataFrame(data_combined, columns=["Time (s)", "Accel_X", "Accel_Y", "Accel_Z", "Absolute Accel"])
-#
-#     # Filter to only keep time from 5 to 25 seconds
-#     df = df[(df["Time (s)"] >= 5.0) & (df["Time (s)"] <= 25.0)]
-#
-#     fig, axs = plt.subplots(4, 1, figsize=(12, 10), sharex=True)
-#
-#     # Plot Acceleration X
-#     axs[0].plot(df["Time (s)"], df["Accel_X"], label=f"{activity} Accel_X", color="red")
-#     axs[0].set_ylabel("Acceleration X (m/s²)")
-#     axs[0].set_title(f"{person} - {activity} (All Positions)")
-#     axs[0].legend()
-#
-#     # Plot Acceleration Y
-#     axs[1].plot(df["Time (s)"], df["Accel_Y"], label=f"{activity} Accel_Y", color="blue")
-#     axs[1].set_ylabel("Acceleration Y (m/s²)")
-#     axs[1].legend()
-#
-#     # Plot Acceleration Z
-#     axs[2].plot(df["Time (s)"], df["Accel_Z"], label=f"{activity} Accel_Z", color="green")
-#     axs[2].set_ylabel("Acceleration Z (m/s²)")
-#     axs[2].legend()
-#
-#     # Plot Absolute Acceleration (magnitude)
-#     axs[3].plot(df["Time (s)"], df["Absolute Accel"], label=f"{activity} Absolute Acceleration", color="purple")
-#     axs[3].set_ylabel("Absolute Acceleration (m/s²)")
-#     axs[3].set_xlabel("Time (s)")
-#     axs[3].legend()
-#
-#     plt.tight_layout()
-#     plt.show()
-#
-#
-# # Example usage
-# plot_activity_acceleration("Brian", "Jumping")
-# plot_activity_acceleration("Brian", "Walking")
-# plot_activity_acceleration("Cissi", "Jumping")
-# plot_activity_acceleration("Cissi", "Walking")
-# plot_activity_acceleration("Alisa", "Jumping")
-# plot_activity_acceleration("Alisa", "Walking")
-
 import matplotlib
-matplotlib.use("TkAgg")  # Fixes the issue with interactive plots
+matplotlib.use("TkAgg")
 
 import h5py
 import numpy as np
@@ -73,107 +7,135 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 hdf5_file = "accelerometer_data.h5"
+people = ["Alisa", "Brian", "Cissi"]
+activities = ["Jumping", "Walking"]
 
-
-def plot_activity_acceleration(person, activity):
-    """Plots acceleration vs. time for a given person and activity (all positions combined)."""
-
+def get_raw_data(person, activity):
     with h5py.File(hdf5_file, "r") as hdf:
-        preprocessed_data = hdf[f"preprocessed_data/{person}/{activity}"]
+        group_path = f"raw_data/{person}/{activity}"
+        if group_path not in hdf:
+            return None
+        group = hdf[group_path]
+        all_data = [
+            np.array(group[speed][ds])[:, :5]
+            for speed in group
+            for ds in group[speed]
+            if np.array(group[speed][ds]).shape[1] >= 5
+        ]
+        return pd.DataFrame(np.vstack(all_data), columns=["Time (s)", "Accel_X", "Accel_Y", "Accel_Z", "Absolute Accel"]) if all_data else None
 
-        all_data = []
-        for speed in preprocessed_data:
-            for position in preprocessed_data[speed]:
-                dataset = np.array(preprocessed_data[speed][position])
-                all_data.append(dataset)
+def get_preprocessed_data(person, activity):
+    with h5py.File(hdf5_file, "r") as hdf:
+        group_path = f"preprocessed_data/{person}/{activity}"
+        if group_path not in hdf:
+            return None
+        group = hdf[group_path]
+        all_data = [
+            np.array(group[speed][ds])[:, :5]
+            for speed in group
+            for ds in group[speed]
+            if np.array(group[speed][ds]).shape[1] >= 5
+        ]
+        return pd.DataFrame(np.vstack(all_data), columns=["Time (s)", "Accel_X", "Accel_Y", "Accel_Z", "Absolute Accel"]) if all_data else None
 
-    # Convert to DataFrame
-    data_combined = np.vstack(all_data)  # Stack all position data together
-    df = pd.DataFrame(data_combined, columns=["Time (s)", "Accel_X", "Accel_Y", "Accel_Z", "Absolute Accel"])
+#Plotting
+def plot_split_axes(activity, data_fn, title_prefix):
+    fig, axs = plt.subplots(3, 4, figsize=(18, 10), sharex=True)
+    fig.suptitle(f"{title_prefix} Accelerometer Data – {activity}", fontsize=18)
 
-    # Filter to only keep time from 5 to 25 seconds
+    for i, person in enumerate(people):
+        df = data_fn(person, activity)
+        if df is None:
+            for j in range(4):
+                axs[i, j].text(0.5, 0.5, f"No Data for {person}", ha='center')
+                axs[i, j].set_title(f"{person} - Missing")
+            continue
+
+        df["Time (s)"] = pd.to_numeric(df["Time (s)"], errors='coerce')
+        df = df[(df["Time (s)"] >= 5.0) & (df["Time (s)"] <= 25.0)]
+
+        axs[i, 0].plot(df["Time (s)"], df["Accel_X"], color="red")
+        axs[i, 0].set_title(f"{person} - X")
+        axs[i, 1].plot(df["Time (s)"], df["Accel_Y"], color="blue")
+        axs[i, 1].set_title(f"{person} - Y")
+        axs[i, 2].plot(df["Time (s)"], df["Accel_Z"], color="green")
+        axs[i, 2].set_title(f"{person} - Z")
+        axs[i, 3].plot(df["Time (s)"], df["Absolute Accel"], color="purple")
+        axs[i, 3].set_title(f"{person} - Abs")
+
+        for j in range(4):
+            axs[i, j].set_ylabel("Accel (m/s²)")
+            axs[i, j].grid(True)
+
+    for ax in axs[-1]:
+        ax.set_xlabel("Time (s)")
+
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.show()
+
+def plot_metadata_summary(activity):
+    fig, axs = plt.subplots(1, 3, figsize=(18, 5))
+    fig.suptitle(f"Metadata Summary – {activity}", fontsize=16)
+
+    for i, person in enumerate(people):
+        df = get_raw_data(person, activity)
+        if df is None:
+            axs[i].text(0.5, 0.5, f"No Data for {person}", ha='center')
+            axs[i].set_title(person)
+            continue
+
+        df = df.apply(pd.to_numeric, errors='coerce')
+        stats = {
+            'Mean_X': df["Accel_X"].mean(), 'Std_X': df["Accel_X"].std(),
+            'Mean_Y': df["Accel_Y"].mean(), 'Std_Y': df["Accel_Y"].std(),
+            'Mean_Z': df["Accel_Z"].mean(), 'Std_Z': df["Accel_Z"].std(),
+            'Mean_Abs': df["Absolute Accel"].mean(), 'Std_Abs': df["Absolute Accel"].std()
+        }
+
+        axs[i].bar(stats.keys(), stats.values(), color=["red", "red", "blue", "blue", "green", "green", "purple", "purple"])
+        axs[i].set_title(person)
+        axs[i].tick_params(axis='x', rotation=45)
+        axs[i].set_ylabel("Value")
+
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.show()
+
+def plot_individual_axes(person, activity):
+    df = get_raw_data(person, activity)
+    if df is None:
+        print(f"No data for {person} - {activity}")
+        return
+
+    df["Time (s)"] = pd.to_numeric(df["Time (s)"], errors='coerce')
     df = df[(df["Time (s)"] >= 5.0) & (df["Time (s)"] <= 25.0)]
 
-    fig, axs = plt.subplots(4, 1, figsize=(12, 10), sharex=True)
+    fig, axs = plt.subplots(4, 1, figsize=(10, 8), sharex=True)
+    fig.suptitle(f"{person} – {activity}", fontsize=16)
 
-    # Plot Acceleration X
-    axs[0].plot(df["Time (s)"], df["Accel_X"], label=f"{activity} Accel_X", color="red")
-    axs[0].set_ylabel("Acceleration X (m/s²)")
-    axs[0].set_title(f"{person} - {activity} (All Positions)")
-    axs[0].legend()
+    axs[0].plot(df["Time (s)"], df["Accel_X"], color="red"); axs[0].set_ylabel("Accel X")
+    axs[1].plot(df["Time (s)"], df["Accel_Y"], color="blue"); axs[1].set_ylabel("Accel Y")
+    axs[2].plot(df["Time (s)"], df["Accel_Z"], color="green"); axs[2].set_ylabel("Accel Z")
+    axs[3].plot(df["Time (s)"], df["Absolute Accel"], color="purple"); axs[3].set_ylabel("Abs Accel"); axs[3].set_xlabel("Time (s)")
 
-    # Plot Acceleration Y
-    axs[1].plot(df["Time (s)"], df["Accel_Y"], label=f"{activity} Accel_Y", color="blue")
-    axs[1].set_ylabel("Acceleration Y (m/s²)")
-    axs[1].legend()
-
-    # Plot Acceleration Z
-    axs[2].plot(df["Time (s)"], df["Accel_Z"], label=f"{activity} Accel_Z", color="green")
-    axs[2].set_ylabel("Acceleration Z (m/s²)")
-    axs[2].legend()
-
-    # Plot Absolute Acceleration (magnitude)
-    axs[3].plot(df["Time (s)"], df["Absolute Accel"], label=f"{activity} Absolute Acceleration", color="purple")
-    axs[3].set_ylabel("Absolute Acceleration (m/s²)")
-    axs[3].set_xlabel("Time (s)")
-    axs[3].legend()
-
-    plt.tight_layout()
+    for ax in axs: ax.grid(True)
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.show()
 
+#Main outputs
 
-# Example usage
-# plot_activity_acceleration("Brian", "Jumping")
-# plot_activity_acceleration("Brian", "Walking")
-# plot_activity_acceleration("Cissi", "Jumping")
-# plot_activity_acceleration("Cissi", "Walking")
-# plot_activity_acceleration("Alisa", "Jumping")
-# plot_activity_acceleration("Alisa", "Walking")
+#Raw Data – Combined Axis Plots
+plot_split_axes("Jumping", get_raw_data, "Raw")
+plot_split_axes("Walking", get_raw_data, "Raw")
 
-def plot_meta_data(person, activity):
-    """Plots statistical summaries for the accelerometer data."""
+#Preprocessed Data – Combined Axis Plots
+plot_split_axes("Jumping", get_preprocessed_data, "Preprocessed")
+plot_split_axes("Walking", get_preprocessed_data, "Preprocessed")
 
-    with h5py.File(hdf5_file, "r") as hdf:
-        preprocessed_data = hdf[f"preprocessed_data/{person}/{activity}"]
+#Raw Metadata
+plot_metadata_summary("Jumping")
+plot_metadata_summary("Walking")
 
-        all_data = []
-        for speed in preprocessed_data:
-            for position in preprocessed_data[speed]:
-                dataset = np.array(preprocessed_data[speed][position])
-                all_data.append(dataset)
-
-    # Convert to DataFrame
-    data_combined = np.vstack(all_data)
-    df = pd.DataFrame(data_combined, columns=["Time (s)", "Accel_X", "Accel_Y", "Accel_Z", "Absolute Accel"])
-
-    # Calculate basic statistics for each axis
-    stats = {
-        'Mean_X': df['Accel_X'].mean(),
-        'Std_X': df['Accel_X'].std(),
-        'Mean_Y': df['Accel_Y'].mean(),
-        'Std_Y': df['Accel_Y'].std(),
-        'Mean_Z': df['Accel_Z'].mean(),
-        'Std_Z': df['Accel_Z'].std(),
-        'Mean_Abs': df['Absolute Accel'].mean(),
-        'Std_Abs': df['Absolute Accel'].std(),
-    }
-
-    # Create a bar plot to display the statistics
-    labels = list(stats.keys())
-    values = list(stats.values())
-
-    plt.figure(figsize=(10, 6))
-    plt.bar(labels, values, color=['red', 'blue', 'green', 'purple'])
-    plt.xticks(rotation=90)
-    plt.ylabel("Value")
-    plt.title(f"{person} - {activity} Meta Data Summary")
-    plt.tight_layout()
-    plt.show()
-
-# Example usage for Meta-Data
-plot_meta_data("Brian", "Walking")
-plot_meta_data("Brian", "Jumping")
-plot_meta_data("Cissi", "Walking")
-plot_meta_data("Cissi", "Jumping")
-plot_meta_data("Alisa", "Walking")
-plot_meta_data("Alisa", "Jumping")
+#Raw Data Per-Person Axis Breakdown
+for person in people:
+    for activity in activities:
+        plot_individual_axes(person, activity)
